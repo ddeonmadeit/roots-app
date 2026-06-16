@@ -1,0 +1,237 @@
+@import "tailwindcss";
+
+/* ─── Light theme — neumorphic cream (default) ──────────── */
+:root {
+  --background: #EBE7DD;
+  --surface: #EBE7DD;
+
+  --shadow-light: #FCFAF3;   /* highlight — top-left */
+  --shadow-dark: #C7C1B2;    /* shadow — bottom-right */
+
+  --text-primary: #4F4838;
+  --text-secondary: #948B78;
+
+  --accent: #94774B;
+  --accent-dark: #6E5938;
+  --accent-soft: #B49A72;
+
+  --green: #6F8A5A;
+  --red: #B5654E;
+  --gold: #C2A268;
+
+  --border: #DBD5C8;
+  --locked: #D2CCBE;
+  --desktop-backdrop: #DEDACF;
+
+  /* Amber accent gradient — subtle in light */
+  --amber-1: rgba(232, 150, 70, 0.30);
+  --amber-2: rgba(196, 90, 28, 0.18);
+}
+
+/* ─── Dark theme — deep charcoal / warm brown ───────────── */
+.dark {
+  --background: #211C18;
+  --surface: #211C18;
+
+  --shadow-light: #262119;   /* subtle lift — softened for dark */
+  --shadow-dark: #14100C;    /* near-black recess */
+
+  --text-primary: #ECE6DB;
+  --text-secondary: #998F7D;
+
+  --accent: #C2762B;
+  --accent-dark: #E8924C;
+  --accent-soft: #8A6E48;
+
+  --green: #84A06A;
+  --red: #C9745C;
+  --gold: #E0822E;
+
+  --border: #322B24;
+  --locked: #2A241E;
+  --desktop-backdrop: #100D0A;
+
+  /* Amber accent gradient — richer / more Turrell on charcoal */
+  --amber-1: rgba(240, 150, 60, 0.42);
+  --amber-2: rgba(200, 70, 18, 0.30);
+}
+
+/* ─── Tailwind v4 theme ─────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-soft: var(--accent-soft);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  --color-gold: var(--gold);
+  --color-border: var(--border);
+  --color-locked: var(--locked);
+  --font-display: var(--font-braun);
+  --font-sans: var(--font-braun);
+}
+
+/* ─── Base ──────────────────────────────────────────────── */
+html { height: 100%; }
+
+body {
+  background: var(--desktop-backdrop);
+  color: var(--text-primary);
+  font-family: var(--font-braun), system-ui, sans-serif;
+}
+
+/* Theme transition — smooth toggle */
+body, .emboss, .emboss-sm, .emboss-lg, .deboss, .deboss-sm, .emboss-interactive {
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+/* ─── Embossed (raised) ─────────────────────────────────── */
+.emboss {
+  background: var(--surface);
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light);
+}
+
+.emboss-sm {
+  background: var(--surface);
+  box-shadow:
+    3px 3px 7px var(--shadow-dark),
+    -3px -3px 7px var(--shadow-light);
+}
+
+.emboss-lg {
+  background: var(--surface);
+  box-shadow:
+    10px 10px 24px var(--shadow-dark),
+    -10px -10px 24px var(--shadow-light);
+}
+
+/* ─── Debossed (pressed in) ─────────────────────────────── */
+.deboss {
+  background: var(--surface);
+  box-shadow:
+    inset 5px 5px 11px var(--shadow-dark),
+    inset -5px -5px 11px var(--shadow-light);
+}
+
+.deboss-sm {
+  background: var(--surface);
+  box-shadow:
+    inset 3px 3px 6px var(--shadow-dark),
+    inset -3px -3px 6px var(--shadow-light);
+}
+
+/* ─── Interactive: raised, presses in on active ─────────── */
+.emboss-interactive {
+  background: var(--surface);
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light);
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.emboss-interactive:hover {
+  box-shadow:
+    7px 7px 16px var(--shadow-dark),
+    -7px -7px 16px var(--shadow-light);
+}
+.emboss-interactive:active {
+  box-shadow:
+    inset 5px 5px 11px var(--shadow-dark),
+    inset -5px -5px 11px var(--shadow-light);
+}
+
+/* ─── Amber outer glow — surrounds a panel's border only ── */
+/* The gradient sits just behind the panel and blurs outward,
+   so only the halo around the border shows (no inner fill). */
+.glow-wrap {
+  position: relative;
+  border-radius: 1.75rem;
+}
+.glow-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    #F0A062 0%,
+    #D2641E 38%,
+    #A8300F 72%,
+    #F0A062 100%
+  );
+  filter: blur(12px);
+  opacity: 0.5;
+  z-index: 0;
+  pointer-events: none;
+}
+.glow-wrap > * {
+  position: relative;
+  z-index: 1;
+}
+.dark .glow-wrap::before {
+  opacity: 0.4;
+  filter: blur(16px);
+}
+
+/* ─── Today's Moment — animated edge highlight ──────────── */
+@property --ring-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes ring-spin {
+  to { --ring-angle: 360deg; }
+}
+/* A bright arc confined to the panel's border ring, rotating */
+.moment-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;               /* ring thickness */
+  pointer-events: none;
+  background: conic-gradient(
+    from var(--ring-angle),
+    transparent 0deg,
+    transparent 270deg,
+    rgba(255,224,178,0.85) 330deg,
+    #FFF4E0 350deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: ring-spin 4.5s linear infinite;
+}
+
+/* A soft inner glow that fades toward the center and pulses */
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 0.75; }
+}
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 6px 0 rgba(245,180,110,0.55),
+    inset 0 0 16px 3px rgba(232,146,76,0.40),
+    inset 0 0 30px 8px rgba(200,95,35,0.22);
+  animation: ring-pulse 2.6s ease-in-out infinite;
+}
+
+/* ─── Reduced motion ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .moment-ring,
+  .pulse-ring { animation: none !important; }
+}
