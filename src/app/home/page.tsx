@@ -1,24 +1,5 @@
 "use client";
 
-import Screen from "@/components/ui/Screen";
-import { Flame, Package, Star, Phone, ChevronRight } from "lucide-react";
-import RootsLogo from "@/components/ui/RootsLogo";
-
-export default function HomePage() {
-  return (
-    <Screen>
-      {/* Brand mark — placeholder Roots logo */}
-      <div className="mb-7 pt-2 flex justify-center text-text-primary">
-        <RootsLogo size={64} />
-      </div>
-
-      {/* Stat pills — embossed */}
-      <div className="flex gap-3 mb-7">
-        {[
-          { icon: <Flame size={17} strokeWidth={1.8} />,   value: "0", label: "Streak" },
-          { icon: <Package size={17} strokeWidth={1.8} />, value: "0", label: "Words"  },
-          { icon: <Star size={17} strokeWidth={1.8} />,    value: "0", label: "XP"     },
-        ].map(({ icon, value, label }) => (
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -115,9 +96,6 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Hero — embossed panel with an inner amber ring + travelling highlight */}
-      <div
-        className="emboss relative mb-6 rounded-[1.75rem] overflow-hidden p-6"
       {/* Today's Moment hero */}
       <div
         className="emboss relative mb-5 rounded-[1.75rem] overflow-hidden p-6"
@@ -128,9 +106,6 @@ export default function HomePage() {
             "inset 0 0 40px 8px rgba(180,72,20,0.28)",
         }}
       >
-        {/* Animated highlight that follows the ring around the edge */}
-        <div className="moment-ring" aria-hidden="true" />
-
         <div className="moment-ring" aria-hidden="true" />
         <div className="relative" style={{ zIndex: 1 }}>
           <div className="flex items-center gap-2 mb-3 text-accent">
@@ -157,34 +132,11 @@ export default function HomePage() {
             }}
           >
             <span className="pulse-ring" aria-hidden="true" />
-            <span className="relative" style={{ zIndex: 1 }}>Start lesson</span>
             <span className="relative" style={{ zIndex: 1 }}>Answer the call</span>
           </button>
         </div>
       </div>
 
-      {/* Continue — inset row */}
-      <button className="deboss w-full rounded-3xl p-5 mb-3 text-left flex items-center justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-accent mb-1">
-            Continue
-          </p>
-          <p className="font-semibold text-text-primary">Lesson 1 · Grandma is Calling</p>
-        </div>
-        <ChevronRight size={18} strokeWidth={1.8} className="text-text-secondary shrink-0" />
-      </button>
-
-      {/* Roots bank — inset row */}
-      <button className="deboss w-full rounded-3xl p-5 text-left flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Package size={18} strokeWidth={1.8} className="text-accent" />
-          <p className="font-medium text-text-primary text-sm">
-            Roots Bank — 0 words collected
-          </p>
-        </div>
-        <ChevronRight size={18} strokeWidth={1.8} className="text-text-secondary shrink-0" />
-      </button>
-    </Screen>
       {/* 7 action cards */}
       <div className="space-y-2.5">
 
