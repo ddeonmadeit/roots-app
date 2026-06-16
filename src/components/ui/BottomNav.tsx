@@ -3,25 +3,32 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef } from "react";
-import { Home, Archive, User } from "lucide-react";
+import { Home, Archive, User, Users } from "lucide-react";
+import { useRootsStore } from "@/store/useRootsStore";
 
 const IMMERSIVE_PREFIXES = [
   "/lesson", "/pattern-lab", "/call", "/story",
   "/texting", "/review", "/onboarding", "/waitlist", "/parent/setup",
 ];
 
-const tabs = [
+const BASE_TABS = [
   { href: "/home",      label: "Home",       icon: Home    },
   { href: "/inventory", label: "Roots Bank", icon: Archive },
   { href: "/profile",   label: "Profile",    icon: User    },
 ];
 
+const PARENT_TAB = { href: "/parent", label: "Parent", icon: Users };
+
 export default function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
   const startX = useRef<number | null>(null);
+  const parentMode = useRootsStore((s) => s.parentMode);
 
+  if (pathname === "/") return null;
   if (IMMERSIVE_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+
+  const tabs = parentMode ? [...BASE_TABS, PARENT_TAB] : BASE_TABS;
 
   const activeIndex = tabs.findIndex(
     (t) => pathname === t.href || pathname.startsWith(t.href + "/"),
