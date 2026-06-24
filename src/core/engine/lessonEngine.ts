@@ -38,6 +38,7 @@ export function buildLessonSteps(lesson: Lesson): LessonStep[] {
     "multiple_choice",
     "fill_blank",
     "call_response",
+    "flashcard",
   ]);
   const lateTypes = new Set([
     "sentence_builder",
@@ -46,6 +47,7 @@ export function buildLessonSteps(lesson: Lesson): LessonStep[] {
     "natural_texting",
     "formal_vs_casual",
     "where_would_you_hear_this",
+    "match_pairs",
   ]);
 
   const interleaveExercises = lesson.exercises.filter((e) => interleaveTypes.has(e.type));

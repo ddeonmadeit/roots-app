@@ -18,7 +18,9 @@ export type ExerciseType =
   | "prefix_swap"
   | "natural_texting"
   | "formal_vs_casual"
-  | "where_would_you_hear_this";
+  | "where_would_you_hear_this"
+  | "flashcard"
+  | "match_pairs";
 
 export type UsageContext = "casual" | "respectful" | "elder_safe" | "formal" | "slang";
 
@@ -133,7 +135,8 @@ export interface Lesson {
   subtitle: string;
   momentType: string;
   learningFocus?: "frequency_words" | "sentence_frame" | "pattern_lab"
-               | "phone_call" | "story" | "texting" | "history_intro";
+               | "phone_call" | "story" | "texting" | "history_intro"
+               | "flashcard_drill" | "interactive_parable";
   difficulty: "beginner" | "easy" | "medium";
   estimatedMinutes: number;
   introPanels?: IntroPanel[];

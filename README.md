@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Roots — Kinyarwanda-First Heritage Language App
 
-## Getting Started
+A web app for diaspora families reconnecting with their heritage language. The MVP is Kinyarwanda-first, with six more languages on the roadmap.
 
-First, run the development server:
+> **Your grandma is calling. You understand a little, but you freeze. Roots helps you answer.**
+
+---
+
+## Tech stack
+
+- **Next.js 16** (App Router, TypeScript, `src/` dir)
+- **React 19**, **Tailwind CSS v4** (`@theme inline` — no config file)
+- **Zustand v5** with `persist` middleware (localStorage key: `roots-demo-v1`)
+- **lucide-react** for icons
+- **BraunLinear** — local font, all weights, used for both display and body
+
+---
+
+## Install & run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev       # http://localhost:3000
+npm run build     # production build + type check
+npm run lint      # ESLint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Best experienced at phone width (360–430px) or on an actual phone via your local network IP.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+src/
+  app/            – Next.js routes (page.tsx per route)
+  components/
+    ui/           – AppButton, Screen, BottomNav, ProgressBar, Modal, ...
+    cards/        – WordCard, PatternCard, WordDetailModal
+    exercises/    – ExercisePlayer + MultipleChoice, FillBlank, SentenceBuilder,
+                    FlashCard, MatchPairs
+    lesson/       – LessonPlayer, CompletionScreen
+    call/         – IncomingCall, CallDialogue, CallComplete
+    story/        – StoryPanelView, WordPopover, StoryComplete
+  core/           – PLATFORM-AGNOSTIC (zero React/Next/DOM imports)
+    types.ts      – canonical TypeScript contracts
+    data/
+      index.ts    – single data-access boundary (getLessons, getWords, ...)
+      kinyarwanda/ – words, lessons, patterns, scenarios, stories, texting
+      demoUsers.ts – Daniel + Amara demo profiles
+    engine/
+      lessonEngine.ts   – buildLessonSteps()
+      answerCheck.ts    – checkAnswer()
+      patternEngine.ts  – renderBreakdown(), parseHighlightMarks()
+      reviewEngine.ts   – buildReviewSession()
+    copy.ts       – UI copy, feedback lines, passive-speaker reflections
+  store/
+    useRootsStore.ts    – Zustand store (persisted)
+    useHasHydrated.ts   – SSR hydration guard
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Demo mode
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The app has no accounts or backend. Three entry paths let you explore everything without setup:
 
-## Deploy on Vercel
+| Button | What it does |
+|---|---|
+| Start as Learner | Full onboarding then language select |
+| Skip to App Demo | Pre-seeds a believable mid-progress learner state |
+| Start Parent Demo | Seeds Daniel + Amara demo data, enables parent mode |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Reset Demo Progress in `/profile` wipes all state and returns to the entry screen.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Content
+
+All Kinyarwanda content is `demo_needs_review` — pending verification by native speakers. Content is labeled clearly throughout the app. See `CONTENT_GUIDE.md` for the contribution workflow.
+
+---
+
+## Deploy to Vercel
+
+Push to `main` — Vercel auto-deploys. No environment variables needed for the demo build. Set `NEXT_PUBLIC_APP_ENV=production` if you want to distinguish environments in future.
+
+---
+
+## Demo limitations
+
+- No real accounts, no backend, no database — localStorage only
+- All Kinyarwanda content is unverified demo content
+- Audio buttons show "Audio coming soon" — no recordings yet
+- Parent/child link is simulated with mock data
+- Waitlist submissions are local-state only
+
+See `NEXT_STEPS.md` for the full roadmap.

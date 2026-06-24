@@ -21,6 +21,15 @@ export function checkAnswer(
 ): AnswerResult {
   const { correctAnswer, explanation } = exercise;
 
+  // match_pairs: element-wise comparison (user submits string[] parallel to options)
+  if (exercise.type === "match_pairs" && Array.isArray(correctAnswer)) {
+    const userArr = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
+    const correct =
+      userArr.length === correctAnswer.length &&
+      userArr.every((u, i) => normalize(u) === normalize(correctAnswer[i]));
+    return { correct, explanation: correct ? undefined : explanation };
+  }
+
   // Sentence builder: user submits string[]
   if (Array.isArray(correctAnswer)) {
     const userStr = Array.isArray(userAnswer)

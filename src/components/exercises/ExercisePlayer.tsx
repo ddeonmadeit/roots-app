@@ -9,6 +9,8 @@ import AppButton from "@/components/ui/AppButton";
 import MultipleChoice from "./MultipleChoice";
 import FillBlank from "./FillBlank";
 import SentenceBuilder from "./SentenceBuilder";
+import FlashCard from "./FlashCard";
+import MatchPairs from "./MatchPairs";
 
 export type ExerciseStatus = "idle" | "correct" | "wrong";
 
@@ -24,6 +26,7 @@ interface ExercisePlayerProps {
 // Tile-based input vs single-option input
 const TILE_TYPES = new Set(["sentence_builder"]);
 const FILL_TYPES = new Set(["fill_blank"]);
+const PAIR_TYPES = new Set(["match_pairs"]);
 
 export default function ExercisePlayer({
   exercise,
@@ -31,8 +34,10 @@ export default function ExercisePlayer({
   onWrong,
   continueLabel = "Continue",
 }: ExercisePlayerProps) {
+  const isFlashcard = exercise.type === "flashcard";
   const isTile = TILE_TYPES.has(exercise.type);
   const isFill = FILL_TYPES.has(exercise.type);
+  const isPairs = PAIR_TYPES.has(exercise.type);
 
   const [optionValue, setOptionValue] = useState<string | null>(null);
   const [tileValue, setTileValue] = useState<string[]>([]);
@@ -41,7 +46,11 @@ export default function ExercisePlayer({
   // Rotate one piece of feedback copy per submission attempt
   const [feedback, setFeedback] = useState<string>("");
 
-  const hasAnswer = isTile ? tileValue.length > 0 : optionValue !== null;
+  const hasAnswer = isTile
+    ? tileValue.length > 0
+    : isPairs
+    ? tileValue.length > 0
+    : optionValue !== null;
   const locked = status === "correct";
 
   const correctText = useMemo(
@@ -65,7 +74,7 @@ export default function ExercisePlayer({
   }
 
   function handleCheck() {
-    const answer = isTile ? tileValue : (optionValue ?? "");
+    const answer = isTile || isPairs ? tileValue : (optionValue ?? "");
     const result = checkAnswer(exercise, answer);
     if (result.correct) {
       setStatus("correct");
@@ -75,6 +84,11 @@ export default function ExercisePlayer({
       setFeedback(pickRandom(wrongFeedback));
       onWrong?.(exercise);
     }
+  }
+
+  // Flashcard manages its own flow — render standalone
+  if (isFlashcard) {
+    return <FlashCard exercise={exercise} onContinue={onContinue} />;
   }
 
   return (
@@ -100,6 +114,13 @@ export default function ExercisePlayer({
           exercise={exercise}
           value={optionValue}
           onChange={handleOptionChange}
+          status={status}
+          disabled={locked}
+        />
+      ) : isPairs ? (
+        <MatchPairs
+          exercise={exercise}
+          onChange={handleTileChange}
           status={status}
           disabled={locked}
         />

@@ -163,6 +163,14 @@ export default function HomePage() {
           onClick={() => router.push("/call/grandma-call")}
         />
 
+        {/* 2b. Mama is Calling */}
+        <ActionRow
+          icon={<Phone size={17} strokeWidth={1.8} className="text-accent" />}
+          label="Phone call"
+          title="Mama is Calling"
+          onClick={() => router.push("/call/mama-call")}
+        />
+
         {/* 3. Story Time */}
         <ActionRow
           icon={<BookOpen size={17} strokeWidth={1.8} className="text-accent" />}
@@ -203,6 +211,14 @@ export default function HomePage() {
           label="Pattern Lab"
           title="See how the language works"
           onClick={() => router.push("/pattern-lab")}
+        />
+
+        {/* 8. Top Words flashcard drill */}
+        <ActionRow
+          icon={<Archive size={17} strokeWidth={1.8} className="text-accent" />}
+          label="Flash cards"
+          title="Top Words — quick drill"
+          onClick={() => router.push("/lesson/lesson-4-top-words")}
         />
 
         {/* Conditional: Parent Dashboard */}
