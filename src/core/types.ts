@@ -161,12 +161,27 @@ export interface DialogueLine {
   feedbackWrong?: string;
 }
 
+export interface Character {
+  id: string;
+  name: string;
+  nameLabel: string;
+  relation: string;
+  themeHex: string;
+  themeMid: string;
+  ringRgba: string;
+  washRgba: string;
+  callId?: string;
+  mode: "call" | "parable";
+  level: number;
+}
+
 export interface Scenario {
   id: string;
   languageId: string;
   title: string;
   subtitle: string;
   callerName: string;
+  characterId?: string;
   scenarioType: "phone_call" | "travel" | "family" | "market" | "community";
   dialogue: DialogueLine[];
   reinforcedWordIds: string[];

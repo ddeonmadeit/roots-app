@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getScenario, getWordsByIds } from "@/core/data/index";
+import { getScenario, getWordsByIds, getCharacter } from "@/core/data/index";
 import { useRootsStore } from "@/store/useRootsStore";
 import IncomingCall from "@/components/call/IncomingCall";
 import CallDialogue from "@/components/call/CallDialogue";
@@ -15,6 +15,7 @@ export default function CallRoute({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const router = useRouter();
   const scenario = getScenario(id);
+  const character = scenario?.characterId ? getCharacter(scenario.characterId) : undefined;
   const completeScenario = useRootsStore((s) => s.completeScenario);
 
   const [state, setState] = useState<CallState>("ringing");
@@ -54,6 +55,7 @@ export default function CallRoute({ params }: { params: Promise<{ id: string }> 
     return (
       <IncomingCall
         scenario={scenario}
+        character={character}
         onAnswer={() => setState("in_call")}
         onDecline={handleDecline}
       />
@@ -61,7 +63,7 @@ export default function CallRoute({ params }: { params: Promise<{ id: string }> 
   }
 
   if (state === "in_call") {
-    return <CallDialogue scenario={scenario} onComplete={handleCallComplete} />;
+    return <CallDialogue scenario={scenario} character={character} onComplete={handleCallComplete} />;
   }
 
   return (

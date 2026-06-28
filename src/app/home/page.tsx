@@ -2,22 +2,12 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Flame,
-  Archive,
-  Star,
-  Phone,
-  BookOpen,
-  Layers,
-  MessageSquare,
-  Users,
-  ChevronRight,
-  AlertCircle,
-} from "lucide-react";
+import { Zap, BookOpen, Phone, ChevronRight, Lock, Star, Archive, Flame } from "lucide-react";
 import { useRootsStore } from "@/store/useRootsStore";
 import { useHasHydrated } from "@/store/useHasHydrated";
-import { getLessons } from "@/core/data/index";
-import { passiveSpeakerReflections } from "@/core/copy";
+import { getLessons, getCallCharacters, getScenarios } from "@/core/data/index";
+import type { Character } from "@/core/types";
+import CharacterPortrait from "@/components/characters/CharacterPortrait";
 import Screen from "@/components/ui/Screen";
 
 function getGreeting(): string {
@@ -29,38 +19,50 @@ function getGreeting(): string {
 }
 
 const allLessons = getLessons();
+const flashLessons = allLessons.filter((l) => l.learningFocus === "flashcard_drill");
+const parableLessons = allLessons.filter((l) => l.learningFocus === "interactive_parable");
+const callCharacters = getCallCharacters()
+  .filter((c) => c.mode === "call")
+  .sort((a, b) => a.level - b.level);
+const callScenarios = getScenarios().filter((s) => s.scenarioType === "phone_call" && s.characterId);
 
 export default function HomePage() {
   const router = useRouter();
   const hydrated = useHasHydrated();
 
-  const streakDays = useRootsStore((s) => s.streakDays);
-  const xp = useRootsStore((s) => s.xp);
-  const collectedWordIds = useRootsStore((s) => s.collectedWordIds);
-  const weakWordIds = useRootsStore((s) => s.weakWordIds);
-  const completedLessonIds = useRootsStore((s) => s.completedLessonIds);
-  const passiveSpeakerLevel = useRootsStore((s) => s.passiveSpeakerLevel);
-  const parentMode = useRootsStore((s) => s.parentMode);
-  const childProfile = useRootsStore((s) => s.childProfile);
+  const streakDays        = useRootsStore((s) => s.streakDays);
+  const xp                = useRootsStore((s) => s.xp);
+  const collectedWordIds  = useRootsStore((s) => s.collectedWordIds);
+  const completedLessonIds   = useRootsStore((s) => s.completedLessonIds);
+  const completedScenarioIds = useRootsStore((s) => s.completedScenarioIds);
+  const childProfile      = useRootsStore((s) => s.childProfile);
 
-  const nextLesson = useMemo(
+  const wordCount = collectedWordIds.length;
+
+  const nextFlash = useMemo(
+    () => flashLessons.find((l) => !completedLessonIds.includes(l.id)),
+    [completedLessonIds],
+  );
+  const nextParable = useMemo(
+    () => parableLessons.find((l) => !completedLessonIds.includes(l.id)),
+    [completedLessonIds],
+  );
+  const activeCallCharacter = useMemo((): Character | null => {
+    for (const char of callCharacters) {
+      if (!char.callId) continue;
+      const scenario = callScenarios.find((s) => s.id === char.callId);
+      if (!scenario) continue;
+      if (!completedScenarioIds.includes(scenario.id)) return char;
+    }
+    return null;
+  }, [completedScenarioIds]);
+
+  const nextSession = useMemo(
     () => allLessons.find((l) => !completedLessonIds.includes(l.id)),
     [completedLessonIds],
   );
 
-  const reflection = passiveSpeakerLevel
-    ? passiveSpeakerReflections[passiveSpeakerLevel]
-    : null;
-
   const greeting = getGreeting();
-  const wordCount = collectedWordIds.length;
-  const weakCount = weakWordIds.length;
-
-  const stats = [
-    { icon: <Flame size={17} strokeWidth={1.8} />, value: String(streakDays), label: "Streak" },
-    { icon: <Archive size={17} strokeWidth={1.8} />, value: String(wordCount), label: "Words" },
-    { icon: <Star size={17} strokeWidth={1.8} />, value: String(xp), label: "XP" },
-  ];
 
   if (!hydrated) {
     return (
@@ -72,195 +74,319 @@ export default function HomePage() {
     );
   }
 
+  function handleContinue() {
+    if (nextFlash)                       router.push(`/lesson/${nextFlash.id}`);
+    else if (nextParable)                router.push(`/lesson/${nextParable.id}`);
+    else if (activeCallCharacter?.callId) router.push(`/call/${activeCallCharacter.callId}`);
+    else if (nextSession)                router.push(`/lesson/${nextSession.id}`);
+  }
+
   return (
     <Screen>
-      {/* Greeting + reflection */}
-      <div className="mb-6 pt-2">
+      {/* Greeting */}
+      <div className="mb-5 pt-2">
         <h1 className="font-display text-2xl font-bold text-text-primary leading-tight">
-          {greeting}
-          {childProfile ? `, ${childProfile.name}` : ""}
+          {greeting}{childProfile ? `, ${childProfile.name}` : ""}
         </h1>
-        {reflection && (
-          <p className="text-sm text-text-secondary mt-1 leading-relaxed">{reflection}</p>
-        )}
+        <p className="text-sm text-text-secondary mt-0.5">Your words are waiting.</p>
       </div>
 
-      {/* Stat pills */}
-      <div className="flex gap-3 mb-7">
-        {stats.map(({ icon, value, label }) => (
-          <div key={label} className="emboss flex-1 rounded-3xl p-4 text-center">
-            <div className="flex justify-center mb-2 text-accent">{icon}</div>
-            <div className="font-bold text-text-primary text-lg leading-none">{value}</div>
-            <div className="text-text-secondary text-[11px] mt-1.5">{label}</div>
+      {/* Stats pills */}
+      <div className="flex gap-3 mb-6">
+        {[
+          { icon: <Flame size={16} strokeWidth={1.8} />, value: String(streakDays), label: "Streak" },
+          { icon: <Archive size={16} strokeWidth={1.8} />, value: String(wordCount),  label: "Words"  },
+          { icon: <Star   size={16} strokeWidth={1.8} />, value: String(xp),          label: "XP"     },
+        ].map(({ icon, value, label }) => (
+          <div key={label} className="emboss flex-1 rounded-3xl p-3 text-center">
+            <div className="flex justify-center mb-1.5 text-accent">{icon}</div>
+            <div className="font-bold text-text-primary text-base leading-none">{value}</div>
+            <div className="text-text-secondary text-[10px] mt-1">{label}</div>
           </div>
         ))}
       </div>
 
-      {/* Today's Moment hero */}
-      <div
-        className="emboss relative mb-5 rounded-[1.75rem] overflow-hidden p-6"
-        style={{
-          boxShadow:
-            "6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light)," +
-            "inset 0 0 16px 0 rgba(235,150,80,0.50)," +
-            "inset 0 0 40px 8px rgba(180,72,20,0.28)",
-        }}
-      >
-        <div className="moment-ring" aria-hidden="true" />
-        <div className="relative" style={{ zIndex: 1 }}>
-          <div className="flex items-center gap-2 mb-3 text-accent">
-            <Phone size={15} strokeWidth={1.8} />
-            <span className="text-[11px] font-semibold uppercase tracking-widest">
-              Today&apos;s Moment
-            </span>
-          </div>
-          <h2 className="font-display text-2xl font-bold text-text-primary mb-2 leading-tight">
-            Grandma is Calling
-          </h2>
-          <p className="text-sm leading-relaxed text-text-secondary mb-5">
-            Greet her respectfully, say where you are, tell her you&apos;re coming soon.
-          </p>
-          <button
-            onClick={() => router.push("/call/grandma-call")}
-            className="relative overflow-hidden rounded-full px-6 py-3 text-xs font-bold tracking-wide uppercase text-accent-dark transition-transform duration-150 active:scale-[0.97]"
-            style={{
-              background: "var(--surface)",
-              boxShadow:
-                "5px 5px 12px var(--shadow-dark), -5px -5px 12px var(--shadow-light)," +
-                "inset 0 0 12px 0 rgba(235,150,80,0.50)," +
-                "inset 0 0 26px 5px rgba(180,72,20,0.26)",
-            }}
-          >
-            <span className="pulse-ring" aria-hidden="true" />
-            <span className="relative" style={{ zIndex: 1 }}>Answer the call</span>
-          </button>
-        </div>
-      </div>
+      {/* ── TODAY'S QUEST — combined quest, amber glow ── */}
+      <TodaysQuest
+        nextFlash={nextFlash ?? null}
+        nextParable={nextParable ?? null}
+        activeCallChar={activeCallCharacter}
+        onContinue={handleContinue}
+      />
 
-      {/* 7 action cards */}
-      <div className="space-y-2.5">
+      {/* ── Mode cards ── */}
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-text-secondary mb-3">
+        Choose your mode
+      </p>
+      <div className="space-y-3">
 
-        {/* 1. Continue lesson */}
-        {nextLesson ? (
-          <ActionRow
-            label="Continue"
-            title={nextLesson.title}
-            onClick={() => router.push(`/lesson/${nextLesson.id}`)}
-          />
-        ) : (
-          <ActionRow
-            label="All lessons done"
-            title="Start from the beginning"
-            onClick={() => router.push(`/lesson/${allLessons[0]?.id ?? ""}`)}
-          />
-        )}
-
-        {/* 2. Grandma is Calling */}
-        <ActionRow
-          icon={<Phone size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Phone call"
-          title="Grandma is Calling"
-          onClick={() => router.push("/call/grandma-call")}
+        {/* Flash Mode */}
+        <ModeCard
+          label="Flash Mode"
+          icon={<Zap size={14} strokeWidth={2} className="text-accent" />}
+          iconBg="rgba(220,170,60,0.18)"
+          title={nextFlash?.title ?? "All complete"}
+          sub="Quick-fire cards & sentence blocks"
+          progressCurrent={completedLessonIds.filter(id => flashLessons.some(l => l.id === id)).length}
+          progressTotal={flashLessons.length}
+          accentColor="var(--accent)"
+          onClick={() => router.push(nextFlash ? `/lesson/${nextFlash.id}` : `/lesson/${flashLessons[0]?.id ?? ""}`)}
         />
 
-        {/* 2b. Mama is Calling */}
-        <ActionRow
-          icon={<Phone size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Phone call"
-          title="Mama is Calling"
-          onClick={() => router.push("/call/mama-call")}
+        {/* Parable Mode */}
+        <ModeCard
+          label="Parable Mode"
+          icon={<BookOpen size={14} strokeWidth={2} style={{ color: "#7A5C3A" }} />}
+          iconBg="rgba(139,108,56,0.20)"
+          title={nextParable?.title ?? "All parables heard"}
+          sub={`The Elder Speaks · Chapter ${completedLessonIds.filter(id => parableLessons.some(l => l.id === id)).length + 1}`}
+          progressCurrent={completedLessonIds.filter(id => parableLessons.some(l => l.id === id)).length}
+          progressTotal={parableLessons.length}
+          accentColor="#7A5C3A"
+          onClick={() => router.push(nextParable ? `/lesson/${nextParable.id}` : `/lesson/${parableLessons[0]?.id ?? ""}`)}
         />
 
-        {/* 3. Story Time */}
-        <ActionRow
-          icon={<BookOpen size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Story"
-          title="Story Time"
-          onClick={() => router.push("/story/story-grandma-word")}
+        {/* Phone Call Mode */}
+        <CallModeCard
+          characters={callCharacters}
+          completedScenarioIds={completedScenarioIds}
+          activeChar={activeCallCharacter}
+          onNavigate={router.push}
         />
 
-        {/* 4. Roots Bank */}
-        <ActionRow
-          icon={<Archive size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Roots Bank"
-          title={`${wordCount} word${wordCount !== 1 ? "s" : ""} collected`}
-          onClick={() => router.push("/inventory")}
-        />
-
-        {/* 5. Review Weak Words */}
-        {weakCount > 0 && (
-          <ActionRow
-            icon={<AlertCircle size={17} strokeWidth={1.8} className="text-accent" />}
-            label="Review"
-            title={`${weakCount} weak word${weakCount !== 1 ? "s" : ""} to practise`}
-            onClick={() => router.push("/review")}
-          />
-        )}
-
-        {/* 6. Save Me Phrases */}
-        <ActionRow
-          icon={<MessageSquare size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Save me phrases"
-          title="Texting practice"
-          onClick={() => router.push("/texting/texting-cousin-talk")}
-        />
-
-        {/* 7. Pattern Lab */}
-        <ActionRow
-          icon={<Layers size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Pattern Lab"
-          title="See how the language works"
-          onClick={() => router.push("/pattern-lab")}
-        />
-
-        {/* 8. Top Words flashcard drill */}
-        <ActionRow
-          icon={<Archive size={17} strokeWidth={1.8} className="text-accent" />}
-          label="Flash cards"
-          title="Top Words — quick drill"
-          onClick={() => router.push("/lesson/lesson-4-top-words")}
-        />
-
-        {/* Conditional: Parent Dashboard */}
-        {parentMode && (
-          <ActionRow
-            icon={<Users size={17} strokeWidth={1.8} className="text-accent" />}
-            label="Parent"
-            title="Parent Dashboard"
-            onClick={() => router.push("/parent")}
-          />
-        )}
       </div>
     </Screen>
   );
 }
 
-function ActionRow({
-  icon,
-  label,
-  title,
-  onClick,
+// ── Today's Quest ─────────────────────────────────────────────────────────────
+
+function TodaysQuest({
+  nextFlash, nextParable, activeCallChar, onContinue,
 }: {
-  icon?: React.ReactNode;
+  nextFlash: ReturnType<typeof getLessons>[number] | null;
+  nextParable: ReturnType<typeof getLessons>[number] | null;
+  activeCallChar: Character | null;
+  onContinue: () => void;
+}) {
+  const hasAnything = nextFlash || nextParable || activeCallChar;
+  if (!hasAnything) return null;
+
+  // Build a dynamic subtitle listing what's queued
+  const queued = [
+    nextFlash   && "flash cards",
+    nextParable && "a parable",
+    activeCallChar && `${activeCallChar.name}'s call`,
+  ].filter(Boolean) as string[];
+
+  const queuedText = queued.length === 1
+    ? queued[0]
+    : queued.slice(0, -1).join(", ") + " & " + queued[queued.length - 1];
+
+  return (
+    <div
+      className="relative rounded-[1.75rem] overflow-hidden p-6 mb-7"
+      style={{
+        background: "var(--surface)",
+        boxShadow:
+          "6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light)," +
+          "inset 0 0 16px 0 rgba(235,150,80,0.50)," +
+          "inset 0 0 40px 8px rgba(180,72,20,0.28)",
+      }}
+    >
+      <div className="moment-ring" aria-hidden="true" />
+      <div className="relative" style={{ zIndex: 1 }}>
+        {/* Label */}
+        <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">
+          Today&apos;s Quest
+        </p>
+
+        {/* Mode icon row */}
+        <div className="flex items-center gap-2 mb-3">
+          {nextFlash && (
+            <span className="w-7 h-7 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(220,170,60,0.18)" }}>
+              <Zap size={13} strokeWidth={2} className="text-accent" />
+            </span>
+          )}
+          {nextParable && (
+            <span className="w-7 h-7 rounded-xl flex items-center justify-center"
+              style={{ background: "rgba(139,108,56,0.18)" }}>
+              <BookOpen size={13} strokeWidth={2} style={{ color: "#7A5C3A" }} />
+            </span>
+          )}
+          {activeCallChar && (
+            <span className="w-7 h-7 rounded-xl flex items-center justify-center"
+              style={{ background: activeCallChar.washRgba.replace(/[\d.]+\)$/, "0.22)") }}>
+              <Phone size={13} strokeWidth={2} style={{ color: activeCallChar.themeHex }} />
+            </span>
+          )}
+        </div>
+
+        <h2 className="font-display text-xl font-bold text-text-primary mb-1.5 leading-tight">
+          Your daily mix
+        </h2>
+        <p className="text-sm leading-relaxed text-text-secondary mb-5 capitalize">
+          {queuedText} — all in one session.
+        </p>
+
+        <button
+          onClick={onContinue}
+          className="relative overflow-hidden rounded-full px-5 py-2.5 text-xs font-bold tracking-wide uppercase text-accent-dark transition-transform duration-150 active:scale-[0.97]"
+          style={{
+            background: "var(--surface)",
+            boxShadow:
+              "4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light)," +
+              "inset 0 0 10px 0 rgba(235,150,80,0.42)," +
+              "inset 0 0 22px 4px rgba(180,72,20,0.22)",
+          }}
+        >
+          <span className="pulse-ring" aria-hidden="true" />
+          <span className="relative" style={{ zIndex: 1 }}>Begin</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Generic mode card (shared style = deboss, same as Flash) ──────────────────
+
+function ModeCard({
+  label, icon, iconBg, title, sub, progressCurrent, progressTotal, accentColor, onClick,
+}: {
   label: string;
+  icon: React.ReactNode;
+  iconBg: string;
   title: string;
+  sub: string;
+  progressCurrent: number;
+  progressTotal: number;
+  accentColor: string;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="deboss w-full rounded-3xl p-5 text-left flex items-center justify-between gap-3 active:opacity-80 transition-opacity"
+      className="deboss w-full rounded-[1.75rem] p-5 text-left active:opacity-80 transition-opacity"
     >
-      <div className="flex items-center gap-3 min-w-0">
-        {icon && <div className="shrink-0">{icon}</div>}
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-accent mb-0.5">
-            {label}
-          </p>
-          <p className="font-semibold text-text-primary text-sm truncate">{title}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0" style={{ background: iconBg }}>
+              {icon}
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>
+              {label}
+            </span>
+          </div>
+          <p className="font-bold text-text-primary text-sm leading-tight mb-0.5">{title}</p>
+          <p className="text-xs text-text-secondary mb-3">{sub}</p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--shadow-dark)" }}>
+              <div
+                className="h-1.5 rounded-full transition-all"
+                style={{
+                  background: accentColor,
+                  width: `${Math.min(100, (progressCurrent / Math.max(1, progressTotal)) * 100)}%`,
+                }}
+              />
+            </div>
+            <span className="text-[10px] text-text-secondary shrink-0">
+              {progressCurrent}/{progressTotal}
+            </span>
+          </div>
         </div>
+        <ChevronRight size={18} strokeWidth={1.8} className="text-text-secondary shrink-0 mt-1" />
       </div>
-      <ChevronRight size={18} strokeWidth={1.8} className="text-text-secondary shrink-0" />
+    </button>
+  );
+}
+
+// ── Phone Call Mode card ──────────────────────────────────────────────────────
+
+function CallModeCard({
+  characters, completedScenarioIds, activeChar, onNavigate,
+}: {
+  characters: Character[];
+  completedScenarioIds: string[];
+  activeChar: Character | null;
+  onNavigate: (path: string) => void;
+}) {
+  const themeHex  = activeChar?.themeHex  ?? "#94774B";
+  const washRgba  = activeChar?.washRgba  ?? "rgba(148,119,75,0.11)";
+
+  return (
+    <button
+      onClick={() => { if (activeChar?.callId) onNavigate(`/call/${activeChar.callId}`); }}
+      className="deboss w-full rounded-[1.75rem] p-5 text-left active:opacity-80 transition-opacity"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: washRgba.replace(/[\d.]+\)$/, "0.22)") }}>
+              <Phone size={14} strokeWidth={2} style={{ color: themeHex }} />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: themeHex }}>
+              Phone Call Mode
+            </span>
+          </div>
+          <p className="font-bold text-text-primary text-sm leading-tight mb-0.5">
+            {activeChar ? `${activeChar.name} is waiting…` : "All calls answered"}
+          </p>
+          {activeChar && (
+            <p className="text-xs text-text-secondary mb-3">
+              {activeChar.level === 0 ? "Intro" : `Level ${activeChar.level}`} · {activeChar.nameLabel}
+            </p>
+          )}
+          {/* Level progression dots */}
+          <div className="flex items-center gap-2 mt-2">
+            {characters.map((char) => {
+              const scenario = callScenarios.find((s) => s.characterId === char.id);
+              const done    = scenario ? completedScenarioIds.includes(scenario.id) : false;
+              const isActive = char.id === activeChar?.id;
+              const locked  = !done && !isActive;
+              return (
+                <div key={char.id} className="flex flex-col items-center gap-1">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+                    style={{
+                      background: done ? char.themeHex : isActive
+                        ? char.washRgba.replace(/[\d.]+\)$/, "0.28)")
+                        : "var(--shadow-dark)",
+                      border: isActive ? `2px solid ${char.themeHex}` : "none",
+                      opacity: locked ? 0.40 : 1,
+                    }}
+                  >
+                    {done ? (
+                      <span className="text-[10px] font-bold text-white">✓</span>
+                    ) : locked ? (
+                      <Lock size={10} strokeWidth={2.5} style={{ color: "var(--text-secondary)" }} />
+                    ) : (
+                      <div style={{ transform: "scale(0.42) translateY(4px)", transformOrigin: "bottom center" }}>
+                        <CharacterPortrait characterId={char.id} size={80} />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[8px] text-text-secondary leading-none">{char.nameLabel}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {/* Active character preview */}
+        {activeChar && (
+          <div
+            className="shrink-0 w-16 h-16 rounded-2xl overflow-hidden flex items-end justify-center"
+            style={{
+              background: washRgba.replace("0.11","0.22").replace("0.08","0.18"),
+              border: `1px solid ${washRgba.replace("0.11","0.32").replace("0.08","0.26")}`,
+            }}
+          >
+            <CharacterPortrait characterId={activeChar.id} size={64} />
+          </div>
+        )}
+      </div>
     </button>
   );
 }

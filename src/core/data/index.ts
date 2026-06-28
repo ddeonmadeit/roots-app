@@ -1,7 +1,7 @@
 // Single data-access boundary. Screens must import from here only.
 // Swapping to Supabase later = reimplementing this module only.
 
-import type { Language, Word, WordCategory, Lesson, Pattern, SentenceFrame, Scenario, Story, TextingLesson, Proverb, ChildProfile } from "../types";
+import type { Language, Word, WordCategory, Lesson, Pattern, SentenceFrame, Scenario, Story, TextingLesson, Proverb, ChildProfile, Character } from "../types";
 import { languages } from "./languages";
 import { kinyarwandaWords } from "./kinyarwanda/words";
 import { kinyarwandaLessons, kinyarwandaSentenceFrames } from "./kinyarwanda/lessons";
@@ -10,6 +10,7 @@ import { kinyarwandaScenarios } from "./kinyarwanda/scenarios";
 import { kinyarwandaStories } from "./kinyarwanda/stories";
 import { kinyarwandaTextingLessons } from "./kinyarwanda/texting";
 import { kinyarwandaProverbs } from "./kinyarwanda/proverbs";
+import { kinyarwandaCharacters } from "./kinyarwanda/characters";
 import { demoChildProfile, demoParentName } from "./demoUsers";
 
 // ── Language ──────────────────────────────────────────────────────────────────
@@ -130,6 +131,22 @@ export function getProverb(id: string): Proverb | undefined {
 
 export function getProverbs(languageId?: string): Proverb[] {
   return languageId ? allProverbs.filter((p) => p.languageId === languageId) : allProverbs;
+}
+
+// ── Characters ────────────────────────────────────────────────────────────────
+
+const allCharacters: Character[] = [...kinyarwandaCharacters];
+
+export function getCharacter(id: string): Character | undefined {
+  return allCharacters.find((c) => c.id === id);
+}
+
+export function getCharacters(mode?: "call" | "parable"): Character[] {
+  return mode ? allCharacters.filter((c) => c.mode === mode) : allCharacters;
+}
+
+export function getCallCharacters(): Character[] {
+  return allCharacters.filter((c) => c.mode === "call").sort((a, b) => a.level - b.level);
 }
 
 // ── Demo users ────────────────────────────────────────────────────────────────
